@@ -17,17 +17,17 @@ namespace Propel\Bundle\PropelBundle\Twig\Extension;
  * @subpackage Extension
  * @author William DURAND <william.durand1@gmail.com>
  */
-class SyntaxExtension extends \Twig_Extension
+class SyntaxExtension extends \Twig\Extension\AbstractExtension
 {
     public function getFilters()
     {
         return [
-            new \Twig_SimpleFilter('format_sql', [$this, 'formatSQL'], ['is_safe' => ['html']]),
-            new \Twig_SimpleFilter('format_memory', [$this, 'formatMemory']),
+            new \Twig\TwigFilter('format_sql', [$this, 'formatSQL'], ['is_safe' => ['html']]),
+            new \Twig\TwigFilter('format_memory', [$this, 'formatMemory']),
         ];
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'propel_syntax_extension';
     }
@@ -54,6 +54,11 @@ class SyntaxExtension extends \Twig_Extension
         return self::toPrecision($sign * $absBytes, $precision).' '.$suffix[$i];
     }
 
+    /**
+     * @param string|string[] $sql
+     *
+     * @return string|string[]
+     */
     public function formatSQL($sql)
     {
         // list of keywords to prepend a newline in output
@@ -119,18 +124,18 @@ class SyntaxExtension extends \Twig_Extension
     /**
      * Rounding to significant digits (sort of like JavaScript's toPrecision()).
      *
-     * @param float   $number             Value to round
-     * @param integer $significantFigures Number of significant figures
+     * @param int|float $number             Value to round
+     * @param integer   $significantFigures Number of significant figures
      *
-     * @return float
+     * @return string
      */
-    public static function toPrecision($number, $significantFigures = 3)
+    public static function toPrecision($number, int $significantFigures = 3): string
     {
         if (0 === $number) {
-            return 0;
+            return '0';
         }
 
-        $significantDecimals = floor($significantFigures - log10(abs($number)));
+        $significantDecimals = (int)floor($significantFigures - log10(abs($number)));
         $magnitude = pow(10, $significantDecimals);
         $shifted = round($number * $magnitude);
 

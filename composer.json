@@ -1,5 +1,5 @@
 {
-    "name": "propel/propel-bundle",
+    "name": "skyfox/propel-bundle",
     "description": "Integration of Propel in Symfony",
     "keywords": ["propel", "orm", "persistence"],
     "type": "symfony-bundle",
@@ -10,20 +10,36 @@
     }],
     "autoload": {
         "psr-4": { "Propel\\Bundle\\PropelBundle\\": "" },
+        "classmap": ["AppBundle.php"],
         "exclude-from-classmap": [ "Tests/" ]
     },
     "require": {
-        "propel/propel": "^2.0@alpha <2.0@beta",
-        "symfony/console": "^2.8|^3.0|^4.0",
-        "symfony/dependency-injection": "^2.8|^3.0|^4.0",
-        "symfony/framework-bundle": "^2.8|^3.0|^4.0",
-        "symfony/security-acl": "^2.8|^3.0|^4.0"
+        "php": ">=7.4",
+        "propel/propel": "2.0.0-beta2",
+        "symfony/console": "^5.0||^6.0",
+        "symfony/dependency-injection": "^5.0||^6.0",
+        "symfony/framework-bundle": "^5.0||^6.0",
+        "symfony/security-bundle": "^5.0||^6.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^6.0",
-        "sensio/framework-extra-bundle": "^4.0",
-        "symfony/form": "^2.8|^3.0|^4.0",
-        "fzaninotto/faker": "^1.5",
-        "mikey179/vfsStream": "^1.6"
+        "ext-json": "*",
+        "ext-simplexml": "*",
+        "ext-pdo": "*",
+        "phpunit/phpunit": "^8.0|^9.0",
+        "sensio/framework-extra-bundle": "^6.0",
+        "symfony/form": "^5.0|^6.0",
+        "fzaninotto/faker": "*",
+        "mikey179/vfsstream": "^1.6",
+        "phpstan/phpstan": "^1.8",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan-deprecation-rules": "^1.0",
+        "phpstan/phpstan-symfony": "^1.2",
+        "twig/twig": "*",
+        "symfony/stopwatch": "^5.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     }
 }

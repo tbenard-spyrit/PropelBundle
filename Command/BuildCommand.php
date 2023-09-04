@@ -10,7 +10,7 @@
 
 namespace Propel\Bundle\PropelBundle\Command;
 
-use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,12 +19,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @author Kévin Gomez <contact@kevingomez.fr>
  */
-class BuildCommand extends ContainerAwareCommand
+class BuildCommand extends Command
 {
     /**
      * {@inheritdoc}
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('propel:build')
@@ -42,9 +42,9 @@ class BuildCommand extends ContainerAwareCommand
     /**
      * @see Command
      *
-     * @throws \InvalidArgumentException When the target directory does not exist
+     * @throws \Symfony\Component\Console\Exception\ExceptionInterface
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$input->getOption('sql')) {
             $in = new ArrayInput(array(
@@ -76,5 +76,7 @@ class BuildCommand extends ContainerAwareCommand
             $cmd = $this->getApplication()->find('propel:sql:insert');
             $cmd->run($in, $output);
         }
+
+        return \Propel\Generator\Command\AbstractCommand::CODE_SUCCESS;
     }
 }

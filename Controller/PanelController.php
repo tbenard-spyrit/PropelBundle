@@ -10,23 +10,23 @@
 
 namespace Propel\Bundle\PropelBundle\Controller;
 
+use Propel\Bundle\PropelBundle\DataCollector\PropelDataCollector;
 use Propel\Runtime\Propel;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\DependencyInjection\ContainerAwareInterface;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Profiler\Profiler;
 
 /**
  * PanelController is designed to display information in the Propel Panel.
  *
  * @author William DURAND <william.durand1@gmail.com>
  */
-class PanelController extends Controller
+class PanelController extends AbstractController
 {
     /**
      * This method renders the global Propel configuration.
      */
-    public function configurationAction()
+    public function configurationAction(): Response
     {
         return $this->render(
             '@Propel/Panel/configuration.html.twig',
@@ -41,19 +41,22 @@ class PanelController extends Controller
     /**
      * Renders the profiler panel for the given token.
      *
-     * @param string  $token      The profiler token
-     * @param string  $connection The connection name
+     * @param string $token The profiler token
+     * @param string $connection The connection name
      * @param integer $query
      *
+     * @param Profiler|null $profiler
      * @return Response A Response instance
      */
-    public function explainAction($token, $connection, $query)
+    public function explainAction(string $token, string $connection, int $query, ?Profiler $profiler): Response
     {
-        $profiler = $this->get('profiler');
         $profiler->disable();
 
         $profile = $profiler->loadProfile($token);
-        $queries = $profile->getCollector('propel')->getQueries();
+
+        /** @var PropelDataCollector $propelDataCollector */
+        $propelDataCollector = $profile->getCollector('propel');
+        $queries = $propelDataCollector->getQueries();
 
         if (!isset($queries[$query])) {
             return new Response('This query does not exist.');

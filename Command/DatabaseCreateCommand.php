@@ -12,6 +12,7 @@ namespace Propel\Bundle\PropelBundle\Command;
 
 use Propel\Runtime\Connection\ConnectionManagerSingle;
 use Propel\Runtime\Propel;
+use Propel\Runtime\ServiceContainer\StandardServiceContainer;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -27,7 +28,7 @@ class DatabaseCreateCommand extends AbstractCommand
     /**
      * @see Command
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('propel:database:create')
@@ -42,24 +43,27 @@ class DatabaseCreateCommand extends AbstractCommand
      *
      * @throws \InvalidArgumentException When the target directory does not exist
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $connectionName = $input->getOption('connection') ?: $this->getDefaultConnection();
         $config = $this->getConnectionData($connectionName);
         $dbName = $this->parseDbName($config['dsn']);
 
         if (null === $dbName) {
-            return $output->writeln('<error>No database name found.</error>');
+            $output->writeln('<error>No database name found.</error>');
+
+            return \Propel\Generator\Command\AbstractCommand::CODE_ERROR;
         } else {
             $query  = 'CREATE DATABASE '. $dbName .';';
         }
 
-        $manager = new ConnectionManagerSingle();
+        $manager = new ConnectionManagerSingle($connectionName);
         $manager->setConfiguration($this->getTemporaryConfiguration($config));
 
+        /** @var StandardServiceContainer $serviceContainer */
         $serviceContainer = Propel::getServiceContainer();
         $serviceContainer->setAdapterClass($connectionName, $config['adapter']);
-        $serviceContainer->setConnectionManager($connectionName, $manager);
+        $serviceContainer->setConnectionManager($manager);
 
         $connection = Propel::getConnection($connectionName);
 
@@ -67,6 +71,9 @@ class DatabaseCreateCommand extends AbstractCommand
         $statement->execute();
 
         $output->writeln(sprintf('<info>Database <comment>%s</comment> has been created.</info>', $dbName));
+
+        // s 5.1 expect integer to be returned. Introduces Command::SUCCESS and Command::FAILURE constants
+        return \Propel\Generator\Command\AbstractCommand::CODE_SUCCESS;
     }
 
     /**
@@ -75,10 +82,10 @@ class DatabaseCreateCommand extends AbstractCommand
      *
      * @see https://github.com/doctrine/doctrine1/blob/master/lib/Doctrine/Connection.php#L1491
      *
-     * @param  array $config A Propel connection configuration.
-     * @return array
+     * @param  array<string, mixed> $config A Propel connection configuration.
+     * @return array<string, mixed>
      */
-    private function getTemporaryConfiguration($config)
+    private function getTemporaryConfiguration(array $config): array
     {
         $dbName = $this->parseDbName($config['dsn']);
 

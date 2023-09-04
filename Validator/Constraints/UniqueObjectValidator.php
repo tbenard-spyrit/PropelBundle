@@ -27,13 +27,19 @@ class UniqueObjectValidator extends ConstraintValidator
     /**
      * {@inheritdoc}
      */
-    public function validate($object, Constraint $constraint)
+    public function validate($object, Constraint $constraint): void
     {
+        /** @var UniqueObject $constraint */
         $fields         = (array) $constraint->fields;
         $class          = get_class($object);
         $queryClass     = $class . 'Query';
         $tableMapClass  = $class::TABLE_MAP;
         $classFields    = $tableMapClass::getFieldnames(TableMap::TYPE_FIELDNAME);
+
+        // ensure at least one field is selected
+        if (0 === \count($fields)) {
+            throw new ConstraintDefinitionException('At least one field has to be specified.');
+        }
 
         foreach ($fields as $fieldName) {
             if (false === array_search($fieldName, $classFields)) {
@@ -64,7 +70,8 @@ class UniqueObjectValidator extends ConstraintValidator
             }
 
             $this->context->buildViolation($constraint->message)
-                ->atPath($constraint->errorPath)
+                // if no path is selected select first field
+                ->atPath($constraint->errorPath ?? $fields[0])
                 ->setParameters(array(
                     '{{ object_class }}' => $class,
                     '{{ fields }}' => implode($constraint->messageFieldSeparator, $fieldParts)

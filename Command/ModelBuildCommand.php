@@ -10,6 +10,7 @@
 
 namespace Propel\Bundle\PropelBundle\Command;
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,7 +25,7 @@ class ModelBuildCommand extends WrappedCommand
     /**
      * {@inheritdoc}
      */
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 
@@ -33,6 +34,7 @@ class ModelBuildCommand extends WrappedCommand
             ->setDescription('Build the model classes based on Propel XML schemas')
 
             ->addOption('connection', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Connection to use. Example: default, bookstore')
+            ->addOption('loader-script-dir', null, InputOption::VALUE_OPTIONAL, 'Target folder of the database table map loader script. Defaults to paths.loaderScriptDir', null)
             ->addArgument('bundle', InputArgument::OPTIONAL, 'The bundle to generate model classes from')
         ;
     }
@@ -40,7 +42,7 @@ class ModelBuildCommand extends WrappedCommand
     /**
      * {@inheritdoc}
      */
-    protected function createSubCommandInstance()
+    protected function createSubCommandInstance(): Command
     {
         return new BaseModelBuildCommand();
     }
@@ -48,9 +50,9 @@ class ModelBuildCommand extends WrappedCommand
     /**
      * {@inheritdoc}
      */
-    protected function getSubCommandArguments(InputInterface $input)
+    protected function getSubCommandArguments(InputInterface $input): array
     {
-        $outputDir = $this->getApplication()->getKernel()->getRootDir().'/../';
+        $outputDir = $this->getKernel()->getProjectDir().'/';
 
         return array(
             '--output-dir' => $outputDir,

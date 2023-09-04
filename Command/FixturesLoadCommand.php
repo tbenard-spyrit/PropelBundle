@@ -28,26 +28,23 @@ class FixturesLoadCommand extends AbstractCommand
 {
     /**
      * Default fixtures directory.
-     * @var string
      */
-    private $defaultFixturesDir = 'app/propel/fixtures';
+    private string $defaultFixturesDir = 'propel/fixtures';
 
     /**
      * Absolute path for fixtures directory
-     * @var string
      */
-    private $absoluteFixturesPath = '';
+    private string $absoluteFixturesPath = '';
 
     /**
      * Filesystem for manipulating files
-     * @var \Symfony\Component\Filesystem\Filesystem
      */
-    private $filesystem = null;
+    private ?\Symfony\Component\Filesystem\Filesystem $filesystem = null;
 
     /**
      * @see Command
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('propel:fixtures:load')
@@ -60,7 +57,7 @@ The <info>propel:fixtures:load</info> loads <info>XML</info>, <info>SQL</info> a
 The <info>--connection</info> parameter allows you to change the connection to use.
 The default connection is the active connection (propel.dbal.default_connection).
 
-The <info>--dir</info> parameter allows you to change the directory that contains <info>XML</info> or/and <info>SQL</info> fixtures files <comment>(default: app/propel/fixtures)</comment>.
+The <info>--dir</info> parameter allows you to change the directory that contains <info>XML</info> or/and <info>SQL</info> fixtures files <comment>(default: propel/fixtures)</comment>.
 
 The <info>--xml</info> parameter allows you to load only <info>XML</info> fixtures.
 The <info>--sql</info> parameter allows you to load only <info>SQL</info> fixtures.
@@ -119,13 +116,15 @@ EOT
         if (null !== $this->bundle) {
             $this->absoluteFixturesPath = $this->getFixturesPath($this->bundle);
         } else {
-            $this->absoluteFixturesPath = realpath($this->getApplication()->getKernel()->getRootDir() . '/../' . $input->getOption('dir'));
+            $this->absoluteFixturesPath = realpath($this->getKernel()->getProjectDir() . '/' . $input->getOption('dir'));
         }
 
         if (!$this->absoluteFixturesPath && !file_exists($this->absoluteFixturesPath)) {
-            return $this->writeSection($output, array(
+            $this->writeSection($output, array(
                 'The fixtures directory "' . $this->absoluteFixturesPath . '" does not exist.'
             ), 'fg=white;bg=red');
+
+            return \Propel\Generator\Command\AbstractCommand::CODE_ERROR;
         }
 
         $noOptions = !$input->getOption('xml') && !$input->getOption('sql') && !$input->getOption('yml');
@@ -147,6 +146,8 @@ EOT
                 $output->writeln('No <info>YML</info> fixtures found.');
             }
         }
+
+        return \Propel\Generator\Command\AbstractCommand::CODE_SUCCESS;
     }
 
     /**
@@ -154,9 +155,11 @@ EOT
      *
      * @param \Symfony\Component\Console\Input\InputInterface   $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
-     * @param string                                            $type   If specified, only fixtures with the given type will be loaded (yml, xml).
+     * @param string|null                                       $type   If specified, only fixtures with the given type will be loaded (yml, xml).
+     *
+     * @return bool|int|void
      */
-    protected function loadFixtures(InputInterface $input, OutputInterface $output, $type = null)
+    protected function loadFixtures(InputInterface $input, OutputInterface $output, ?string $type = null)
     {
         if (null === $type) {
             return;
@@ -178,7 +181,7 @@ EOT
             return;
         }
 
-        $nb = $loader->load($datas, $connectionName);
+        $nb = $loader->load(iterator_to_array($datas), $connectionName);
 
         $output->writeln(sprintf('<comment>%s</comment> %s fixtures file%s loaded.', $nb, strtoupper($type), $nb > 1 ? 's' : ''));
 
@@ -190,8 +193,10 @@ EOT
      *
      * @param \Symfony\Component\Console\Input\InputInterface   $input
      * @param \Symfony\Component\Console\Output\OutputInterface $output
+     *
+     * @return int
      */
-    protected function loadSqlFixtures(InputInterface $input, OutputInterface $output)
+    protected function loadSqlFixtures(InputInterface $input, OutputInterface $output): int
     {
         $tmpdir = $this->getCacheDir();
         $datas  = $this->getFixtureFiles('sql');
@@ -230,7 +235,7 @@ EOT
      *
      * @param string $tmpdir The temporary directory path.
      */
-    protected function prepareCache($tmpdir)
+    protected function prepareCache(string $tmpdir): void
     {
         // Recreate a propel directory in cache
         $this->filesystem->remove($tmpdir);
@@ -240,7 +245,7 @@ EOT
     /**
      * Insert SQL
      */
-    protected function insertSql($connectionName, InputInterface $input, OutputInterface $output)
+    protected function insertSql(string $connectionName, InputInterface $input, OutputInterface $output): bool
     {
         $parameters = array(
             '--connection'  => array($connectionName),
@@ -271,12 +276,12 @@ EOT
      * Returns the fixtures files to load.
      *
      * @param string $type The extension of the files.
-     * @param string $in   The directory in which we search the files. If null,
+     * @param string|null $in   The directory in which we search the files. If null,
      *                     we'll use the absoluteFixturesPath property.
      *
-     * @return \Iterator An iterator through the files.
+     * @return \ArrayIterator<int, \SplFileInfo>|Finder
      */
-    protected function getFixtureFiles($type = 'sql', $in = null)
+    protected function getFixtureFiles(string $type = 'sql', ?string $in = null)
     {
         $finder = new Finder();
         $finder->sort(function ($a, $b) {

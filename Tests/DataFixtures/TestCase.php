@@ -31,7 +31,7 @@ class TestCase extends BaseTestCase
      */
     protected $tmpFiles = array();
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -61,10 +61,13 @@ XML;
         }
 
         $this->con = Propel::getServiceContainer()->getConnection('default');
+        // added for tests only!
+        // convert numeric values to string otherwise they will be converted to integer in PHP 8.1
+        $this->con->setAttribute(\PDO::ATTR_STRINGIFY_FETCHES, true);
         $this->con->beginTransaction();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         foreach ($this->tmpFiles as $eachFile) {
             @unlink($eachFile);

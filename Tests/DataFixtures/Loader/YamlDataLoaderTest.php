@@ -165,7 +165,7 @@ Propel\Bundle\PropelBundle\Tests\Fixtures\DataFixtures\Loader\CoolBook:
     CoolBook_1:
         id: '1'
         name: <?php \$faker('word'); ?>
-        description: <?php \$faker('sentence'); ?>
+        description: <?php \$faker('word'); ?>
 
 YAML;
         $filename  = $this->getTempFile($fixtures);
@@ -179,10 +179,10 @@ YAML;
         $book = $books[0];
         $this->assertNotNull($book->getName());
         $this->assertNotEquals('null', strtolower($book->getName()));
-        $this->assertRegexp('#[a-z]+#', $book->getName());
+        $this->assertMatchesRegularExpression('#[a-z]+#', $book->getName());
         $this->assertNotNull($book->getDescription());
         $this->assertNotEquals('null', strtolower($book->getDescription()));
-        $this->assertRegexp('#[\w ]+#', $book->getDescription());
+        $this->assertMatchesRegularExpression('#[\w ]+#', $book->getDescription());
     }
 
     public function testYamlLoadManyToMany()

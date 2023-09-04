@@ -11,9 +11,9 @@
 
 namespace Propel\Bundle\PropelBundle\Security\User;
 
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
-use Symfony\Component\Security\Core\Exception\UsernameNotFoundException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 
 /**
@@ -59,8 +59,10 @@ class PropelUserProvider implements UserProviderInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $username
      */
-    public function loadUserByUsername($username)
+    public function loadUserByUsername($username): UserInterface
     {
         $queryClass = $this->queryClass;
         $query      = $queryClass::create();
@@ -73,7 +75,12 @@ class PropelUserProvider implements UserProviderInterface
         }
 
         if (null === $user = $query->findOne()) {
-            throw new UsernameNotFoundException(sprintf('User "%s" not found.', $username));
+            // because this branch work with both s5 and s6
+            if (class_exists('Symfony\Component\Security\Core\Exception\UsernameNotFoundException')) {
+                throw new \Symfony\Component\Security\Core\Exception\UsernameNotFoundException(sprintf('User "%s" not found.', $username));
+            } else {
+                throw new UserNotFoundException(sprintf('User "%s" not found.', $username));
+            }
         }
 
         return $user;
@@ -82,7 +89,7 @@ class PropelUserProvider implements UserProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function refreshUser(UserInterface $user)
+    public function refreshUser(UserInterface $user): UserInterface
     {
         if (!$user instanceof $this->class) {
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', get_class($user)));
@@ -95,9 +102,16 @@ class PropelUserProvider implements UserProviderInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $class
      */
-    public function supportsClass($class)
+    public function supportsClass($class): bool
     {
         return $class === $this->class;
+    }
+
+    public function loadUserByIdentifier(string $identifier): UserInterface
+    {
+        return $this->loadUserByUsername($identifier);
     }
 }
